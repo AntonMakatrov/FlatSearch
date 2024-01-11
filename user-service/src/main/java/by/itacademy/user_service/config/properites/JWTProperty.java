@@ -1,4 +1,4 @@
-package by.itacademy.user.config.properites;
+package by.itacademy.user_service.config.properites;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

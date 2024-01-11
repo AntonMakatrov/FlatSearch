@@ -2,7 +2,7 @@ version: '3.5'
 services:
   db:
     build: postgresql
-    image: flats_postgresql:1.0.0
+    image: flats_postgresql:1.0.0q
     restart: always
     environment:
       POSTGRES_USER: root
@@ -39,7 +39,13 @@ services:
     image: flats_audit-service:1.0.0
     networks:
       - flats_ntwrk
-
+  mail-service:
+    build: mail-service
+    image: flats_mail-service:1.0.2
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - flats_ntwrk
   proxy:
     build: proxy
     image: flats_proxy:1.0.1
