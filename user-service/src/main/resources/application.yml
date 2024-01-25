@@ -1,15 +1,17 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/user-service?currentSchema=security
+    url: jdbc:postgresql://localhost:5432/user-service
     password: 1234
     username: postgres
   jpa:
-    hibernate:
-      ddl-auto: update
+
     show-sql: true
 
 app:
   jwt:
     secret: NDQ1ZjAzNjQtMzViZi00MDRjLTljZjQtNjNjYWIyZTU5ZDYw
     issuer: ITAcademy
+  feign:
+    mail-service:
+      url: http://localhost:8081/
