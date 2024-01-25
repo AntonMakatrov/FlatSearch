@@ -1,15 +1,16 @@
 package by.itacademy.user_service.service;
 
 import by.itacademy.user_service.service.api.IUserPasswordEncoder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserPasswordEncoder implements IUserPasswordEncoder {
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public UserPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public String encodePassword(String plainPassword) {
@@ -20,5 +21,4 @@ public class UserPasswordEncoder implements IUserPasswordEncoder {
     public Boolean passwordMatches(String plainPassword, String encodedPassword) {
         return passwordEncoder.matches(plainPassword, encodedPassword);
     }
-
 }

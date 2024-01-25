@@ -1,55 +1,52 @@
 package by.itacademy.user_service.service;
 
+import by.itacademy.user_service.core.dto.UserCreateDTO;
 import by.itacademy.user_service.core.dto.UserDTO;
 import by.itacademy.user_service.core.dto.UserDetailsDTO;
-import by.itacademy.user_service.core.entity.UserRole;
+import by.itacademy.user_service.core.dto.UserQueryDto;
 import by.itacademy.user_service.core.entity.UserStatus;
 import by.itacademy.user_service.core.entity.UserEntity;
-import by.itacademy.user_service.core.exceptions.InternalServerErrorException;
+import by.itacademy.user_service.core.exceptions.EntityNotFoundException;
+import by.itacademy.user_service.core.exceptions.ValidationException;
 import by.itacademy.user_service.repository.UserRepository;
 import by.itacademy.user_service.service.api.IUserPasswordEncoder;
 import by.itacademy.user_service.service.api.IUserService;
 import by.itacademy.user_service.service.api.IVerificationQueueService;
-import by.itacademy.user_service.transformer.UserTransformer;
-import org.modelmapper.ModelMapper;
-import org.springframework.dao.DataAccessException;
+import by.itacademy.user_service.transformer.api.IUserTransformer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class UserService implements IUserService {
     private final UserRepository userRepository;
-    private final UserTransformer userTransformer;
-    private final ModelMapper modelMapper;
+    private final IUserTransformer userTransformer;
     private final IVerificationQueueService verificationQueueService;
     private final IUserPasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, UserTransformer userTransformer, ModelMapper modelMapper, IVerificationQueueService verificationQueueService,
+    public UserService(UserRepository userRepository, IUserTransformer userTransformer, IVerificationQueueService verificationQueueService,
                        IUserPasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.userTransformer = userTransformer;
-        this.modelMapper = modelMapper;
         this.verificationQueueService = verificationQueueService;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public UserDTO findInfoAbout() {
-        UserDetailsDTO userDetails = (UserDetailsDTO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Optional<UserEntity> userEntity = userRepository.findById(userDetails.getId());
-        UserEntity asd = convertToEntity(userEntity);
-        return userTransformer.transformInfoDtoFromEntity(asd);
+        UserDetailsDTO userDetails = (UserDetailsDTO) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+        return findById(userDetails.getId());
     }
 
     @Override
@@ -62,64 +59,77 @@ public class UserService implements IUserService {
 
     }
 
-    //TODO переделать без OPTIONAL
     @Override
-    public Optional<UserEntity> findById(UUID id) {
-        return this.userRepository.findById(id);
+    public UserDTO findById(UUID id) {
+        UserEntity entity = this.userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
+        return this.userTransformer.transformInfoDtoFromEntity(entity);
     }
 
     @Override
     @Transactional
-    public void save(UserEntity user) {
-        UserEntity entity = new UserEntity();
-        entity.setMail(user.getMail());
-        entity.setFio(user.getFio());
-        entity.setRole(UserRole.USER);
-        entity.setStatus(UserStatus.WAITING_ACTIVATION);
-        entity.setPassword(passwordEncoder.encodePassword(user.getPassword()));
+    public void save(UserCreateDTO user) {
+        validateEmail(user.getMail());
+        UserEntity userForSave = userRepository.saveAndFlush(userTransformer.transformEntityFromCreateDto(user));
 
-        try{
-            this.userRepository.save(entity);
-        } catch (DataAccessException e) {
-            throw new InternalServerErrorException(e.getMessage());
-        }
+        this.verificationQueueService.add(userForSave);
+    }
 
-        this.verificationQueueService.add(entity);
+    @Transactional
+    @Override
+    public UserEntity createUser(UserCreateDTO userCreationDto) {
+        validateEmail(userCreationDto.getMail());
+        UserEntity userForSave = userRepository.saveAndFlush(userTransformer.transformEntityFromCreateDto(userCreationDto));
+//        String token = temporarySecretTokenService.createToken(userForSave.getEmail());
+
+        return userForSave;
     }
 
     @Override
-    @Transactional
-    public void update(UserEntity entity, UUID id, LocalDateTime dtUpdate) {
-        Optional<UserEntity> optional = findById(id);
-        UserEntity user = convertToEntity(optional);
-        user.setMail(entity.getMail());
-        user.setFio(entity.getFio());
-        user.setRole(entity.getRole());
-        user.setStatus(entity.getStatus());
-        user.setPassword(passwordEncoder.encodePassword(entity.getPassword()));
+    public UserQueryDto getUserQueryDto(String email){
+        return userRepository.findPasswordAndStatusByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User", email)
+                );
+    }
 
-        try {
-            this.userRepository.save(user);
-        } catch (DataAccessException e) {
-            throw new InternalServerErrorException(e.getMessage());
+    @Override
+    public UserDetailsDTO getUserDetailsDto(String email) {
+        return userRepository.findIdFioAndRoleByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User", email));
+    }
+    @Override
+    @Transactional
+    public UserEntity update(UserCreateDTO dto, UUID id, LocalDateTime dtUpdate) {
+        UserEntity userEntity = getUserById(id);
+        userEntity
+                .setMail(dto.getMail())
+                .setPassword(passwordEncoder.encodePassword(dto.getPassword()))
+                .setFio(dto.getFio())
+                .setRole(dto.getRole())
+                .setStatus(dto.getStatus());
+        if (userEntity.getUpdateDate().truncatedTo(ChronoUnit.MILLIS).isEqual(dtUpdate)) {
+            userRepository.saveAndFlush(userEntity);
+        } else {
+            throw new ValidationException("version field - " + dtUpdate
+                    .toInstant(ZoneOffset.ofTotalSeconds(0))
+                    .toEpochMilli());
         }
+        return userEntity;
     }
 
     @Override
     @Transactional
     public void activate(String mail){
-        Optional<UserEntity> optional = userRepository.findByMail(mail);
-        UserEntity user = convertToEntity(optional);
-        user.setStatus(UserStatus.ACTIVATED);
-
-        try {
-            this.userRepository.save(user);
-        } catch (DataAccessException e) {
-            throw new InternalServerErrorException(e.getMessage());
-        }
+        userRepository.updateStatusByMail(UserStatus.ACTIVATED, mail);
     }
 
-    private UserEntity convertToEntity(Optional<UserEntity> entity) {
-        return modelMapper.map(entity, UserEntity.class);
+    private void validateEmail(String email){
+        if (userRepository.existsByMail(email)) {
+            throw new ValidationException("Данный mail уже зарегистрирован");
+        }
+    }
+    private UserEntity getUserById(UUID id) {
+        return userRepository
+                .findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User", id));
     }
 }

@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-@FeignClient(name = "mail-service", url = "http://localhost:8081/mail")
+@FeignClient(name = "mail-service", url = "${app.feign.mail-service.url}mail")
 public interface ISendVerificationService {
     @RequestMapping(method = RequestMethod.POST, value = "/send")
     void send(VerificationDTO verificationDTO);

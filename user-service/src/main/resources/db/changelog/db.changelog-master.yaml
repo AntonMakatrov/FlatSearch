@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - include:
+      file: db/db.schemas.xml
+  - include:
+      relativeToChangelogFile: true
+      file: ddl/users-ddl.xml
+  - include:
+      relativeToChangelogFile: true
+      file: dml/users-dml.xml
+  - include:
+      relativeToChangelogFile: true
+      file: ddl/tokens-ddl.xml

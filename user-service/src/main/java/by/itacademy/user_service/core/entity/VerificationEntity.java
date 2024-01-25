@@ -12,6 +12,7 @@ import java.util.UUID;
 @Table(schema = "users", name = "codes")
 public class VerificationEntity {
     @Id
+    @Column(name = "uuid")
     private UUID id;
     private String code;
     private String mail;

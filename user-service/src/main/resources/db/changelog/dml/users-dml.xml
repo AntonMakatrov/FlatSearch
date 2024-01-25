@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+
+    <changeSet author="by.itacademy" id="insert_value_in_table">
+        <insert tableName="users" schemaName="${users.schema}">
+            <column name="uuid">7963ae51-df61-445c-ab92-9eb58921fd28</column>
+            <column name="mail">admin@gmail.com</column>
+            <column name="password">$2a$10$uuvA0OBRC36lzJLTaJoKfOTy/L7AyPAoQ8mVENBQPMfoh2wbU5M4O</column>
+            <column name="fio">Admin</column>
+            <column name="user_role">ADMIN</column>
+            <column name="user_status">ACTIVATED</column>
+            <column name="created_date">2023-12-05</column>
+            <column name="updated_date">2023-12-05</column>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

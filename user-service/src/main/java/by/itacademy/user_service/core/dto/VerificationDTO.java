@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class VerificationDTO {
+public class VerificationDTO implements Mailable{
     private String code;
     private String mail;
 }

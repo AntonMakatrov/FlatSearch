@@ -13,6 +13,7 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity implements Serializable {
     @Id
+    @Column(name = "uuid")
     private UUID id = UUID.randomUUID();
     @CreatedDate
     @Column(name = "created_date")

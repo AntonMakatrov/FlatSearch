@@ -14,11 +14,8 @@ import java.util.UUID;
 public class UserDetailsDTO implements Identifiable, Userable {
 
     private UUID id;
-
     private String mail;
-
     private String fio;
-
     private UserRole role;
 
 }

@@ -9,6 +9,6 @@ public class EntityNotFoundException extends RuntimeException {
     }
 
     public EntityNotFoundException(String entityName, String email) {
-        super(entityName + " not found by email " + email);
+        super(entityName + " not found by mail " + email);
     }
 }

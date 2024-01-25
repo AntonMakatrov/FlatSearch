@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class UserLoginDTO {
+public class UserLoginDTO implements Mailable {
 
     @Email(message = "Email should be valid")
     @NotNull

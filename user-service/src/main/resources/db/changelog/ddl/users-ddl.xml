@@ -1,0 +1,42 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+
+    <changeSet author="by.itacademy" id="create_schema_users">
+        <sql>
+            CREATE SCHEMA IF NOT EXISTS users;
+        </sql>
+    </changeSet>
+
+    <changeSet author="by.itacademy" id="create_table_users">
+        <createTable tableName="users" schemaName="${users.schema}">
+            <column name="uuid" type="uuid">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="users_uuid_pk"/>
+            </column>
+            <column name="mail" type="varchar">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fio" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_role" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_status" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_date" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

@@ -25,9 +25,9 @@ public class VerificationService implements IVerificationService {
     public void verify(VerificationDTO verificationDTO){
         Optional<VerificationEntity> verificationEntity = verificationRepository.findVerificationEntitiesByCode(verificationDTO.getCode());
         if(verificationEntity.isEmpty()) {
-            throw new ValidationException();
+            throw new ValidationException("Верификация провалилась");
         }
-        Optional<UserEntity> userEntity = userRepository.findByMail(verificationDTO.getMail());
+        UserEntity userEntity = userRepository.findByMail(verificationDTO.getMail());
 
 
     }
