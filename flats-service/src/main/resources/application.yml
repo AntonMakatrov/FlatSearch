@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  jackson:
+    deserialization:
+      read-unknown-enum-values-as-null: true
+
+custom:
+  rent-web-sites:
+    pages-limit: 10
+    kufar:
+      base-url-sale: https://re.kufar.by/l/minsk/kupit/kvartiru
+      base-url-rent: "https://re.kufar.by/l/minsk/snyat/kvartiru-dolgosrochno"
+
+app:
+  jwt:
+    secret: NDQ1ZjAzNjQtMzViZi00MDRjLTljZjQtNjNjYWIyZTU5ZDYw
+    issuer: ITAcademy

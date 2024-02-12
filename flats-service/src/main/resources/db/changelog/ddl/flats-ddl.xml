@@ -1,0 +1,51 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
+
+    <changeSet author="by.itacademy" id="create_schema_flats">
+        <sql>
+            CREATE SCHEMA IF NOT EXISTS flats;
+        </sql>
+    </changeSet>
+
+    <changeSet author="by.itacademy" id="create_table_flats">
+        <createTable tableName="flats" schemaName="${flats.schema}">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="flats_id_pk"/>
+            </column>
+            <column name="created_date" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_date" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="offer_type" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar">
+                <constraints nullable="true"/>
+            </column>
+            <column name="bedrooms" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="area" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="price" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="floor" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="photo_urls" type="varchar[]">
+                <constraints nullable="true"/>
+            </column>
+            <column name="original_url" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

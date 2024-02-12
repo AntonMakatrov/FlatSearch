@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: db/db.schemas.xml
+  - include:
+      relativeToChangelogFile: true
+      file: ddl/flats-ddl.xml
+  - include:
+      relativeToChangelogFile: true
+      file: ddl/dead-flats-ddl.xml

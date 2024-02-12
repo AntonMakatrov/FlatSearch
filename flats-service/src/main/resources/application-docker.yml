@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://flat-service:5432/flat-service
+    password: root
+    username: root

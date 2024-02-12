@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/flat-service
+    password: 1234
+    username: postgres
+
+server:
+  port: 80
