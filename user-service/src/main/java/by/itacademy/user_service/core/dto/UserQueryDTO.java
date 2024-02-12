@@ -16,7 +16,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class UserQueryDto {
+public class UserQueryDTO {
 
     @NotNull
     @Size(min = 6, max = 12)

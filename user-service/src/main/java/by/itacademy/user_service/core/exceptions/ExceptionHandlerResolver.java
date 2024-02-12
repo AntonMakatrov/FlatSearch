@@ -59,7 +59,7 @@ public class ExceptionHandlerResolver {
     public ErrorResponse validationError(ValidationException exception) {
         log.error(exception.getMessage());
         return new ErrorResponse("error",
-                "Запрос некорректен. Сервер не может обработать запрос");
+                exception.getMessage());
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)

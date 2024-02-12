@@ -1,4 +1,4 @@
-package by.itacademy.user_service.controller.utils;
+package by.itacademy.user_service.utils;
 
 import by.itacademy.user_service.config.properites.JWTProperty;
 import by.itacademy.user_service.core.dto.UserDetailsDTO;

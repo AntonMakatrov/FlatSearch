@@ -1,6 +1,6 @@
 package by.itacademy.user_service.controller.filter;
 
-import by.itacademy.user_service.controller.utils.JwtTokenHandler;
+import by.itacademy.user_service.utils.JwtTokenHandler;
 import by.itacademy.user_service.core.dto.UserDetailsDTO;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -40,14 +40,12 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Get jwt token and validate
         final String token = header.split(" ")[1].trim();
         if (!jwtHandler.validate(token)) {
             chain.doFilter(request, response);
             return;
         }
 
-        // Get user identity and set it on the spring security context
         UserDetailsDTO userDetails = jwtHandler.getUserDetailsDtoFromJwt(token);
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + userDetails.getRole()));
 
