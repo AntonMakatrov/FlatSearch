@@ -3,22 +3,22 @@ package by.itacademy.user_service.service;
 import by.itacademy.user_service.core.dto.VerificationDTO;
 import by.itacademy.user_service.core.entity.UserEntity;
 import by.itacademy.user_service.core.entity.VerificationEntity;
+import by.itacademy.user_service.core.exceptions.EntityNotFoundException;
 import by.itacademy.user_service.core.exceptions.ValidationException;
 import by.itacademy.user_service.repository.UserRepository;
 import by.itacademy.user_service.repository.VerificationRepository;
 import by.itacademy.user_service.service.api.IVerificationService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class VerificationService implements IVerificationService {
     private final VerificationRepository verificationRepository;
-    private final UserRepository userRepository;
-
-    public VerificationService(VerificationRepository verificationRepository, UserRepository userRepository) {
+    public VerificationService(VerificationRepository verificationRepository) {
         this.verificationRepository = verificationRepository;
-        this.userRepository = userRepository;
     }
 
     @Override
@@ -27,8 +27,14 @@ public class VerificationService implements IVerificationService {
         if(verificationEntity.isEmpty()) {
             throw new ValidationException("Верификация провалилась");
         }
-        UserEntity userEntity = userRepository.findByMail(verificationDTO.getMail());
+        verificationRepository.deleteEntityByMailAndCode(verificationDTO.getMail(), verificationDTO.getCode());
+    }
 
-
+    @Transactional
+    @Override
+    public void deleteEntityByMailAndCode(String mail, String code) {
+        if (verificationRepository.deleteEntityByMailAndCode(mail, code) == 0) {
+            throw new EntityNotFoundException("User", mail);
+        }
     }
 }
