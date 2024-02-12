@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 public class StructuredErrorResponse {
 
-    private String logRef;
+    private String logref;
 
     private List<ErrorDetails> errors;
 }

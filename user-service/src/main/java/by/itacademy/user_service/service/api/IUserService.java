@@ -3,7 +3,7 @@ package by.itacademy.user_service.service.api;
 import by.itacademy.user_service.core.dto.UserCreateDTO;
 import by.itacademy.user_service.core.dto.UserDTO;
 import by.itacademy.user_service.core.dto.UserDetailsDTO;
-import by.itacademy.user_service.core.dto.UserQueryDto;
+import by.itacademy.user_service.core.dto.UserQueryDTO;
 import by.itacademy.user_service.core.entity.UserEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +18,7 @@ public interface IUserService {
 
     UserDTO findById(UUID id);
 
-    void save(UserCreateDTO user);
+    UserEntity save(UserCreateDTO user);
     UserEntity createUser(UserCreateDTO userCreationDto);
 
     UserEntity update(UserCreateDTO user, UUID id, LocalDateTime dt_update);
@@ -27,6 +27,6 @@ public interface IUserService {
 
     UserDetailsDTO getUserDetailsDto(String mail);
 
-    UserQueryDto getUserQueryDto(String email);
+    UserQueryDTO getUserQueryDto(String email);
 
 }

@@ -1,9 +1,10 @@
 package by.itacademy.user_service.service;
 
+import by.itacademy.user_service.aop.Audited;
 import by.itacademy.user_service.core.dto.UserCreateDTO;
 import by.itacademy.user_service.core.dto.UserDTO;
 import by.itacademy.user_service.core.dto.UserDetailsDTO;
-import by.itacademy.user_service.core.dto.UserQueryDto;
+import by.itacademy.user_service.core.dto.UserQueryDTO;
 import by.itacademy.user_service.core.entity.UserStatus;
 import by.itacademy.user_service.core.entity.UserEntity;
 import by.itacademy.user_service.core.exceptions.EntityNotFoundException;
@@ -26,6 +27,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
+import static by.itacademy.user_service.core.entity.AuditedAction.*;
+import static by.itacademy.user_service.core.entity.EssenceType.USER;
+
 @Service
 public class UserService implements IUserService {
     private final UserRepository userRepository;
@@ -43,6 +47,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Audited(auditedAction = INFO_ABOUT_ME, essenceType = USER)
     public UserDTO findInfoAbout() {
         UserDetailsDTO userDetails = (UserDetailsDTO) SecurityContextHolder
                 .getContext().getAuthentication().getPrincipal();
@@ -50,6 +55,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Audited(auditedAction = INFO_ABOUT_ALL_USERS, essenceType = USER)
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         Page<UserEntity> entityPage = userRepository.findAll(pageable);
         List<UserDTO> dtoList = entityPage.stream()
@@ -60,6 +66,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Audited(auditedAction = INFO_ABOUT_USER_BY_ID, essenceType = USER)
     public UserDTO findById(UUID id) {
         UserEntity entity = this.userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
         return this.userTransformer.transformInfoDtoFromEntity(entity);
@@ -67,25 +74,24 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public void save(UserCreateDTO user) {
+    public UserEntity save(UserCreateDTO user) {
         validateEmail(user.getMail());
         UserEntity userForSave = userRepository.saveAndFlush(userTransformer.transformEntityFromCreateDto(user));
 
         this.verificationQueueService.add(userForSave);
+        return userForSave;
     }
 
     @Transactional
     @Override
+    @Audited(auditedAction = CREATE_USER, essenceType = USER)
     public UserEntity createUser(UserCreateDTO userCreationDto) {
         validateEmail(userCreationDto.getMail());
-        UserEntity userForSave = userRepository.saveAndFlush(userTransformer.transformEntityFromCreateDto(userCreationDto));
-//        String token = temporarySecretTokenService.createToken(userForSave.getEmail());
-
-        return userForSave;
+        return userRepository.saveAndFlush(userTransformer.transformEntityFromCreateDto(userCreationDto));
     }
 
     @Override
-    public UserQueryDto getUserQueryDto(String email){
+    public UserQueryDTO getUserQueryDto(String email){
         return userRepository.findPasswordAndStatusByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User", email)
                 );
@@ -98,6 +104,7 @@ public class UserService implements IUserService {
     }
     @Override
     @Transactional
+    @Audited(auditedAction = UPDATE_USER, essenceType = USER)
     public UserEntity update(UserCreateDTO dto, UUID id, LocalDateTime dtUpdate) {
         UserEntity userEntity = getUserById(id);
         userEntity
@@ -109,7 +116,7 @@ public class UserService implements IUserService {
         if (userEntity.getUpdateDate().truncatedTo(ChronoUnit.MILLIS).isEqual(dtUpdate)) {
             userRepository.saveAndFlush(userEntity);
         } else {
-            throw new ValidationException("version field - " + dtUpdate
+            throw new ValidationException("Неверный dt_update - " + dtUpdate
                     .toInstant(ZoneOffset.ofTotalSeconds(0))
                     .toEpochMilli());
         }
@@ -124,7 +131,7 @@ public class UserService implements IUserService {
 
     private void validateEmail(String email){
         if (userRepository.existsByMail(email)) {
-            throw new ValidationException("Данный mail уже зарегистрирован");
+            throw new ValidationException("Данный почтовый адрес уже зарегистрирован. Проверьте правильность введенных данных");
         }
     }
     private UserEntity getUserById(UUID id) {

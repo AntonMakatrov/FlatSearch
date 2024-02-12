@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Getter
 public class ErrorResponse implements Serializable {
 
-    private String logRef;
+    private String logref;
 
     private String message;
 
