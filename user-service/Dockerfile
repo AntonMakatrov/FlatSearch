@@ -1,8 +1,10 @@
-FROM eclipse-temurin:19-jre-focal
-MAINTAINER ITAcademy
+FROM maven:3.8.5-openjdk-17-slim as build-image
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package
 
-ADD ./target/user-service.jar /app/
-
-CMD ["java", "-Xmx200m", "-jar", "/app/user-service.jar"]
-
-EXPOSE 8080 8089
+FROM eclipse-temurin:17.0.9_9-jre-jammy
+WORKDIR /app
+COPY --from=build-image /app/target/*.jar user-service.jar
+CMD ["java","-jar","user-service.jar"]

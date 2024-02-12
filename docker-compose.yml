@@ -1,14 +1,96 @@
-version: '3.5'
 services:
-  db:
-    build: postgresql
-    image: flats_postgresql:1.0.0q
-    restart: always
+  # audit-service
+  audit-service:
+    container_name: audit-service
+    build:
+      context: ./audit-service
+    ports:
+      - "8083:80"
+    networks:
+      - rent-network
     environment:
-      POSTGRES_USER: root
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - audit-database
+  # audit-db
+  audit-database:
+    container_name: audit-database
+    image: postgres:16
+    volumes:
+      - audit-db-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: audit-service
+      POSTGRES_USER: root1
       POSTGRES_PASSWORD: root
     networks:
-      - flats_ntwrk
+      - rent-network
+  # user-service
+  user-service:
+    container_name: user-service
+    build:
+      context: ./user-service
+    ports:
+      - "8081:80"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - rent-network
+    depends_on:
+      - user-database
+  # user-db
+  user-database:
+    container_name: user-database
+    image: postgres:16
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: user-service
+      POSTGRES_USER: root2
+      POSTGRES_PASSWORD: root
+    networks:
+      - rent-network
+  # flat-service
+  flats-service:
+    container_name: flats-service
+    build:
+      context: ./flats-service
+    ports:
+      - "8084:80"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - rent-network
+    depends_on:
+      - flats-database
+  # flat-db
+  flats-database:
+    container_name: flat-service
+    image: postgres:16
+    volumes:
+      - flats-db-data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: flat-service
+      POSTGRES_USER: root3
+      POSTGRES_PASSWORD: root
+    networks:
+      - rent-network
+
+  mail-service:
+    container_name: mail-service
+    build:
+      context: ./mail-service
+    ports:
+      - "8082:80"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - rent-network
   pgadmin:
     build: pgadmin
     image: flats_pgadmin:1.0.0
@@ -17,42 +99,28 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: root
     ports:
-      - "82:80"
+      - "85:80"
     networks:
-      - flats_ntwrk
+      - rent-network
   swagger-ui:
     build: swagger-ui
     image: flats_swagger-ui:1.0.6
     ports:
-      - "81:8080"
+      - "86:8080"
     networks:
-      - flats_ntwrk
-  user-service:
-    build: user-service
-    image: flats_user-service:1.0.2
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-    networks:
-      - flats_ntwrk
-  audit-service:
-    build: audit-service
-    image: flats_audit-service:1.0.0
-    networks:
-      - flats_ntwrk
-  mail-service:
-    build: mail-service
-    image: flats_mail-service:1.0.2
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-    networks:
-      - flats_ntwrk
+      - rent-network
   proxy:
     build: proxy
     image: flats_proxy:1.0.1
     ports:
       - "80:80"
     networks:
-      - flats_ntwrk
+      - rent-network
 networks:
-    flats_ntwrk:
-      name: flats_ntwrk
+  rent-network:
+    name: rent-network
+
+volumes:
+  flats-db-data:
+  user-db-data:
+  audit-db-data:
