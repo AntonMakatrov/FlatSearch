@@ -1,6 +1,7 @@
 package by.itacademy.audit.controller.filter;
 
 import by.itacademy.audit.controller.utils.JwtTokenHandler;
+import by.itacademy.audit.core.dto.UserDetailsDTO;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.apache.logging.log4j.util.Strings.isEmpty;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -32,86 +34,35 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain)
-            throws ServletException, IOException {
-
-        final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (isEmpty(header) || !header.startsWith("Bearer ")) {
-            chain.doFilter(request, response);
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+        final String header = request.getHeader(AUTHORIZATION);
+        if (request.getRequestURI().contains("actuator")) {
+            filterChain.doFilter(request, response);
             return;
         }
-
-        // Get jwt token and validate
+        if (isEmpty(header) || !header.startsWith("Bearer ")) {
+            throw new RuntimeException("No token");
+        }
         final String token = header.split(" ")[1].trim();
         if (!jwtHandler.validate(token)) {
-            chain.doFilter(request, response);
-            return;
+            throw new RuntimeException("Not valid token");
         }
 
-        // Get user identity and set it on the spring security context
-        // 2 Варианта
-        // 1. Сходить на урл /me положив в хэадер токен.
-        // Получить данные на user-service через http ответ разобрать и поместить
-        // в переменную userDetails.
-        // 2. Изначально поместить всё в токен и доставать всё из токена
+        UserDetailsDTO userDetailsDtoDto = jwtHandler.getUserDetailsDtoFromJwt(token);
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + userDetailsDtoDto.getRole()));
 
-        String userName = jwtHandler.getUsername(token);
-        //мой временный вариант
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        if("admin".equals(userName)){
-            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        }
-        UserDetails userDetails = new UserDetails() {
-            @Override
-            public Collection<? extends GrantedAuthority> getAuthorities() {
-                return authorities;
-            }
-
-            @Override
-            public String getPassword() {
-                return null;
-            }
-
-            @Override
-            public String getUsername() {
-                return userName;
-            } //пример как доставать из токена
-
-            @Override
-            public boolean isAccountNonExpired() {
-                return false;
-            }
-
-            @Override
-            public boolean isAccountNonLocked() {
-                return false;
-            }
-
-            @Override
-            public boolean isCredentialsNonExpired() {
-                return false;
-            }
-
-            @Override
-            public boolean isEnabled() {
-                return false;
-            }
-        };
-
-        UsernamePasswordAuthenticationToken
-                authentication = new UsernamePasswordAuthenticationToken(
-                userDetails, null,
-                userDetails == null ?
-                        List.of() : userDetails.getAuthorities()
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                userDetailsDtoDto,
+                null,
+                authorities
         );
-
-        authentication.setDetails(
-                new WebAuthenticationDetailsSource().buildDetails(request)
-        );
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        chain.doFilter(request, response);
+        filterChain.doFilter(request, response);
     }
 }
