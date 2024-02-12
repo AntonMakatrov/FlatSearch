@@ -7,50 +7,57 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+import static org.springframework.http.HttpMethod.*;
+import static org.springframework.security.config.Customizer.withDefaults;
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(jsr250Enabled = true, securedEnabled = true)
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtFilter filter) throws Exception  {
-        // Enable CORS and disable CSRF
-        http = http.cors().and().csrf().disable();
+        http
+                .cors(withDefaults())
+                .csrf(AbstractHttpConfigurer::disable);
 
-        // Set session management to stateless
-        http = http
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and();
+        http
+                .sessionManagement(httpSecuritySessionManagementConfigurer ->
+                        httpSecuritySessionManagementConfigurer
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                );
 
-        // Set unauthorized requests exception handler
-        http = http
-                .exceptionHandling()
-                .authenticationEntryPoint(
-                        (request, response, ex) -> {
-                            response.setStatus(
-                                    HttpServletResponse.SC_UNAUTHORIZED
-                            );
-                        }
-                )
-                .accessDeniedHandler((request, response, ex) -> {
-                    response.setStatus(
-                            HttpServletResponse.SC_FORBIDDEN
-                    );
-                })
-                .and();
-
-
-        // Add JWT token filter
-        http.addFilterBefore(
-                filter,
-                UsernamePasswordAuthenticationFilter.class
+        http
+                .exceptionHandling(httpSecurityExceptionHandlingConfigurer ->
+                        httpSecurityExceptionHandlingConfigurer
+                                .authenticationEntryPoint(
+                                        (request, response, ex) -> response.setStatus(
+                                                HttpServletResponse.SC_UNAUTHORIZED
+                                        )
+                                )
+                                .accessDeniedHandler(
+                                        (request, response, ex) -> response.setStatus(
+                                                HttpServletResponse.SC_FORBIDDEN
+                                        )
+                                )
+                );
+        http.authorizeHttpRequests(requests -> requests
+                .requestMatchers(GET, "/audit").hasAnyRole("ADMIN")
+                .requestMatchers(GET, "/audit/{uuid}").hasAnyRole("ADMIN")
+                .requestMatchers(POST, "/report/{type}").permitAll()
+                .requestMatchers(GET, "/report/{uuid}/export").permitAll()
+                .requestMatchers(HEAD, "/report/{uuid}/export").permitAll()
+                .requestMatchers(GET, "/report").permitAll()
+                .requestMatchers(POST, "/audit").hasAnyRole("SYSTEM")
         );
-
+        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
